@@ -1,18 +1,17 @@
-# Converter-Excel
 import streamlit as st
 import pandas as pd
 from io import BytesIO
 import zipfile
 import os
 
-st.set_page_config(page_title="Excel para CSV", layout="centered")
+st.set_page_config(page_title="CSV para Excel", layout="centered")
 
-st.title("Converter Excel para CSV")
-st.caption("Selecione um ou mais arquivos Excel para converter em CSV.")
+st.title("Converter CSV para Excel")
+st.caption("Selecione um ou mais arquivos CSV para converter em arquivos Excel e baixar em ZIP.")
 
 uploaded_files = st.file_uploader(
-    "Selecione os arquivos Excel",
-    type=["xlsx", "xls"],
+    "Selecione os arquivos CSV",
+    type=["csv"],
     accept_multiple_files=True
 )
 
@@ -21,23 +20,24 @@ if uploaded_files and len(uploaded_files) > 0:
 
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
         for file in uploaded_files:
-            df = pd.read_excel(file)
+            df = pd.read_csv(file)
+            
+            # Criar nome do Excel
+            nome_excel = os.path.splitext(file.name)[0] + ".xlsx"
+            excel_buffer = BytesIO()
+            df.to_excel(excel_buffer, index=False, engine="openpyxl")
+            excel_buffer.seek(0)
 
-            nome_csv = os.path.splitext(file.name)[0] + ".csv"
-            csv_buffer = BytesIO()
-            df.to_csv(csv_buffer, index=False, encoding="utf-8-sig")
-            csv_buffer.seek(0)
-
-            zipf.writestr(nome_csv, csv_buffer.read())
+            zipf.writestr(nome_excel, excel_buffer.read())
 
     zip_buffer.seek(0)
 
     st.success("Conversão realizada com sucesso!")
 
     st.download_button(
-        label="Baixar arquivos CSV (ZIP)",
+        label="Baixar arquivos Excel (ZIP)",
         data=zip_buffer,
-        file_name="csv_convertidos.zip",
+        file_name="excel_convertidos.zip",
         mime="application/zip",
         on_click=lambda: st.session_state.clear()
     )
